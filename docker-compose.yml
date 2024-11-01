@@ -1,0 +1,40 @@
+services:
+  web:
+    image: tasks_api
+    container_name: tasks_api
+    ports:
+      - "8000:8000"
+    
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    depends_on:
+      - db
+    command: >
+      sh -c "sleep 10 && alembic upgrade head && uvicorn src.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - tasks
+
+  db:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    networks:
+      - tasks
+
+  redis:
+    image: redis
+    container_name: 'redis-rate'
+    ports:
+      - "6379:6379"
+    networks:
+      - tasks
+
+
+
+networks:
+  tasks:
+    driver: bridge
